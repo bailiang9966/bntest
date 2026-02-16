@@ -9,7 +9,10 @@ on:
 jobs:
   run-kline-script:
     # 核心：指定亚洲区域的Ubuntu运行器
-    runs-on: ubuntu-latest-asia
+     runs-on:
+      - ubuntu-latest-asia
+      - windows-latest-asia
+      - ubuntu-latest
     steps:
       # 1. 拉取仓库代码到运行器
       - name: 拉取仓库代码
