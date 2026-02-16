@@ -1,17 +1,12 @@
-name: BTC K线测试（优先亚洲IP）
+name: BTC K线测试（仅ubuntu-latest，修复语法错误）
 on:
   workflow_dispatch:  # 手动触发
   schedule:
-    - cron: '0 0 * * *'  # 定时执行
+    - cron: '0 0 * * *'  # 定时执行（可选）
 
 jobs:
   run-kline-script:
-    # 核心：优先级队列配置
-    # 1. 首选：亚洲Ubuntu（ubuntu-latest-asia）
-    # 2. 备选1：亚洲Windows（windows-latest-asia）
-    # 3. 兜底：非美国通用Ubuntu（优先欧洲/亚洲节点）
-    runs-on:
-      - ubuntu-latest
+    runs-on: ubuntu-latest  # 仅用这个标签，秒级执行
     steps:
       - name: 拉取仓库代码
         uses: actions/checkout@v4
@@ -21,31 +16,31 @@ jobs:
         with:
           python-version: '3.10'
       
-      - name: 安装requests库（兼容Linux/Windows）
+      - name: 安装requests库
         run: |
           python -m pip install --upgrade pip
           pip install requests
-        # Windows下自动用PowerShell执行，Linux用Bash，无需额外适配
       
-      - name: 检查运行器信息+IP归属地（跨平台兼容）
+      - name: 检查运行器信息+IP归属地（纯bash语法，无报错）
         run: |
-          # 打印运行器类型和区域（确认用了哪个标签）
+          # 打印运行器基础信息
           echo "运行器系统：$RUNNER_OS"
           echo "运行器区域：$RUNNER_REGION"
           
-          # 跨平台获取公网IP（兼容Linux/Windows）
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            IP=$(curl -s https://api.ipify.org)
-            echo "出口IP：$IP"
-            # Linux下用jq解析IP归属地
-            curl -s https://ipapi.co/$IP/json/ | jq .
+          # 1. 获取公网IP（bash原生curl，兼容所有Linux）
+          IP=$(curl -s --max-time 10 https://api.ipify.org)
+          echo "出口IP：$IP"
+          
+          # 2. 获取IP归属地（用ip-api.com，比ipapi.co更稳定）
+          if [ -n "$IP" ]; then
+            GEO_INFO=$(curl -s --max-time 10 "http://ip-api.com/json/$IP?lang=zh-CN")
+            echo "IP归属地信息："
+            echo "$GEO_INFO" | jq .  # 格式化输出（GitHub runner内置jq）
           else
-            # Windows下用PowerShell命令
-            $IP = (Invoke-WebRequest -Uri https://api.ipify.org).Content
-            echo "出口IP：$IP"
-            (Invoke-WebRequest -Uri "https://ipapi.co/$IP/json/").Content | ConvertFrom-Json
+            echo "无法获取IP地址"
           fi
-        shell: bash  # 强制用Bash执行，简化跨平台逻辑
+        shell: bash  # 强制bash，避免语法冲突
       
       - name: 执行BTC K线获取脚本
         run: python get_btc_kline.py
+        shell: bash
