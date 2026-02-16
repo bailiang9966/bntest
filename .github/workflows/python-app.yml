@@ -9,7 +9,7 @@ on:
 jobs:
   run-kline-script:
     # 核心：指定亚洲区域的Ubuntu运行器
-     runs-on:
+    runs-on:
       - ubuntu-latest-asia
       - windows-latest-asia
       - ubuntu-latest
