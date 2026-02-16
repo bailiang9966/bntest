@@ -6,7 +6,7 @@ on:
 
 jobs:
   run-kline-script:
-    runs-on: ubuntu-latest-asia  # 仅用这个标签，秒级执行
+    runs-on: windows-latest-asia  # 仅用这个标签，秒级执行
     steps:
       - name: 拉取仓库代码
         uses: actions/checkout@v4
